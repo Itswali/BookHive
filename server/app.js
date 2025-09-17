@@ -24,6 +24,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true}))
 
 app.use("/api/v1/auth", authRouter);
+http://localhost:4000/api/v1/auth/register
 
 connectDB();
 
