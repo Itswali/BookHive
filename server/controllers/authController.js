@@ -90,3 +90,74 @@ export const verifyOTP = catchAsyncErrors(async (req, res, next) => {
 
   }
 })
+
+export const login = catchAsyncErrors(async (req, res, next) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return next(new ErrorHandler("Please provide email and password.", 400));
+  }
+  const user = await User.findOne({ email, accountVerified: true }).select("+password");
+  if (!user) {
+    return next(new ErrorHandler("Invalid email or account not verified.", 401));
+  }
+  const isPasswordMatched = await bcrypt.compare(password, user.password);
+  if (!isPasswordMatched) {
+    return next(new ErrorHandler("Invalid password.", 401));
+  }
+  sendToken(user, 200, `Welcome back, ${user.name}`, res);
+});
+
+
+export const logout = catchAsyncErrors(async (req, res, next) => {
+  res.status(200).cookie("token", "", {
+    expires: new Date(Date.now()),
+    httpOnly: true,
+  }).json({
+    success: true,
+    message: "Logged out successfully.",
+  });
+});
+
+
+export const getUser =  catchAsyncErrors(async (req, res, next) => {
+  const user = req.user;
+  req.status(200).json({
+    sucess: true,
+    user,
+  })
+});
+
+export const forgotPassword = catchAsyncErrors(async (req, res, next) => {
+  const user= await user.findOne({
+    email: req.body.email,
+    accountVerified: true,
+  });
+  if(!user) {
+    return next(new ErrorHandler("User not found.", 404));
+  }
+  const resetToken = user.generateResetPasswordToken();
+
+  await user.save({ validateBeforeSave: false});
+  const resetPasswordUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+
+  const message = generateFOrgotPasswordTemplate(resetPasswordUrl);
+
+  try {
+    await sendEmail({
+      email: user.email,
+      subject: "BookHive Password Recovery",
+      message,
+    });
+    res.status(200).json({
+      success: true,
+      message: `Email sent to ${user.email} successfully.`,
+    });
+  } catch (error) {
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+
+    await user.save({ validateBeforeSave: false});
+
+    return next(new ErrorHandler(error.message, 500));
+  }
+});
