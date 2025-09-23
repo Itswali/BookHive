@@ -26,3 +26,35 @@ export function generateVerificationOtpEmailTemplate (otpCode) {
     </div>
 </div>`
 }
+
+
+export function generateFOrgotPasswordTemplate() {
+  return `
+  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
+    <div style="background-color: #f4f4f4; padding: 20px; text-align: center;">
+        <h1 style="color: #333; margin: 0;">Password Reset Request</h1>
+    </div>
+    <div style="padding: 30px; text-align: center; color: #555;">
+        <p style="font-size: 16px; line-height: 1.6;">
+            Hello,
+        </p>
+        <p style="font-size: 16px; line-height: 1.6;">
+            We received a request to reset your password. Click the button below to reset it.
+        </p>
+        <div style="margin: 20px 0;">
+            <a href="${resetPasswordUrl}" style="display: inline-block; padding: 12px 24px; background-color: #337ab7; color: #fff; text-decoration: none; border-radius: 6px; font-size: 16px;">
+                Reset Password
+            </a>
+        </div>
+        <p style="font-size: 14px; color: #888; margin-top: 20px;">
+            If you did not request a password reset, please ignore this email.
+        </p>
+    </div>
+    <div style="background-color: #f4f4f4; padding: 15px; text-align: center; font-size: 12px; color: #888;">
+        <p style="margin: 0;">
+            This link will expire in 1 hour.
+        </p>
+    </div>
+</div>
+  `
+}
