@@ -143,7 +143,6 @@ const authSlice = createSlice({
   }
 });
 
-
 export const resetAuthSlice = () => (dispatch) => {
   dispatch(authSlice.actions.resetAuthSlice())
 }
