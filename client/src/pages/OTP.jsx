@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import logo from "../assets/black-logo.png";
 import logo_with_title from "../assets/logo-with-title.png";
-import { Link, useParams } from "react-router-dom";
+import { Link, Navigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { otpVerification, resetAuthSlice } from "../store/slices/authSlice";
 import { toast } from "react-toastify";
@@ -21,9 +21,9 @@ const OTP = () => {
   };
 
   useEffect(() => {
-    if (message) {
-      toast.success(message);
-    }
+    // if (message) {
+    //   toast.success(message);
+    // }
     if (error) {
       toast.error(error);
       dispatch(resetAuthSlice());
@@ -39,7 +39,7 @@ const OTP = () => {
         {/* LEFT SIDE */}
         <div className="w-full md:w-1/2 flex items-center justify-center bg-white p-8 relative ">
           <Link
-            to={"/login"}
+            to={"/register"}
             className="border-2 border-black rounded-3x1 font-bold w-52 py-2 px-4 fixed top-10 -left-28 hover:bg-black hover:text-white transition duration-300 text-end"
           >
             Back
