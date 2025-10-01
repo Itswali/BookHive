@@ -21,10 +21,10 @@ const ForgotPassword = () => {
   };
 
   useEffect(() => {
-    // if (message) {
-    //   toast.success(message);
-    //   dispatch(resetAuthSlice());
-    // }
+    if (message) {
+      toast.success(message);
+      dispatch(resetAuthSlice());
+    }
     if (error) {
       toast.error(error);
       dispatch(resetAuthSlice());
@@ -50,7 +50,7 @@ const ForgotPassword = () => {
         {/* RIGHT SIDE */}
 
         <div>
-<Link
+          <Link
             to={"/login"}
             className="border-2 border-black rounded-3x1 font-bold w-52 py-2 px-4 fixed top-10 -left-28 hover:bg-black hover:text-white transition duration-300 text-end"
           >
@@ -68,6 +68,7 @@ const ForgotPassword = () => {
               <div>
                 <input
                   type="email"
+                  required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Email"
@@ -77,13 +78,13 @@ const ForgotPassword = () => {
               <button
                 type="submit"
                 className="border-2 mt-5 border-black w-full font-semibold bg-black text-white py-2 rounded-lg hover:bg-white hover:text-black transition "
+                disabled={loading ? true : false}
               >
                 RESET PASSWORD
               </button>
             </form>
           </div>
         </div>
-
       </div>
     </>
   );
