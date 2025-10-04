@@ -8,7 +8,7 @@ import SideBar from "../layout/SideBar";
 import UserDashboard from "../components/UserDashboard"
 import AdminDashboard from "../components/AdminDashboard"
 import BookManagement from "../components/BookManagement"
-import  Catalog from "../components/Catalog"
+import Catalog from "../components/Catalog"
 import Users from "../components/Users"
 import MyBorrowedBooks from "../components/MyBorrowedBooks";
 
@@ -24,8 +24,8 @@ const Home = () => {
 
   return (
     <>
-      <div className="relative md:p1-64 flex min-h-screen bg-gray-100">
-        <div className="md:hidden z-10 absolute right-6 top-4 sm:top-6 flex justify-center item-center bg-black rounded-md h-9 w-9 text-white">
+      <div className="relative md:pl-64 flex min-h-screen bg-gray-100">
+        <div className="md:hidden z-10 absolute right-6 top-4 sm:top-6 flex justify-center items-center bg-black rounded-md h-9 w-9 text-white">
           <GiHamburgerMenu
             className="text-2x1"
             onClick={() => setIsSideBarOpen(!isSideBarOpen)}
@@ -36,48 +36,38 @@ const Home = () => {
           setIsSideBarOpen={setIsSideBarOpen}
           setSelectedComponent={setSelectedComponent}
         />
-        {(
-            ()=> {
-              switch (selectedComponent) {
-                case "Dashboard":
-                  return user?.role === "User" ? (
-                    <UserDashboard/>
-                  ) : (
-                    <AdminDashboard/>
-                  )
-                  break;
-
-                  case "Books":
-                    return <BookManagement />
-                    break;
-
-                  case "Catalog":
-                    if(user.role === "Admin") {
-                      return <Catalog />
-                    }
-                    break;
-
-                    case "Users":
-                      if(user.role === "Admin") {
-                      return <Users />
-                    }
-                    break;
-                    case "My Borrowed Books":
-                      return <MyBorrowedBooks />
-                    break;
-
-                default:
-                  return user?.role === "User" ? (
-                    <UserDashboard/>
-                  ) : (
-                    <AdminDashboard/>
-                  )
-                  break;
-              }
+        {
+          (()=> {
+            switch (selectedComponent) {
+              case "Dashboard":
+                return user?.role === "User" ? (
+                  <UserDashboard/>
+                ) : (
+                  <AdminDashboard/>
+                )
+              case "Books":
+                return <BookManagement />
+              case "Catalog":
+                if(user.role === "Admin") {
+                  return <Catalog />
+                }
+                return null;
+              case "Users":
+                if(user.role === "Admin") {
+                  return <Users />
+                }
+                return null;
+              case "My Borrowed Books":
+                return <MyBorrowedBooks />
+              default:
+                return user?.role === "User" ? (
+                  <UserDashboard/>
+                ) : (
+                  <AdminDashboard/>
+                )
             }
-          )()
+          })()
         }
-
       </div>
     </>
   );

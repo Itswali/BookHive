@@ -3,27 +3,46 @@ import ErrorHandler from "../middlewares/errorMiddlewares.js";
 import { User } from "../models/userModel.js";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
+// Assuming these utility files exist and contain the necessary logic:
 import { sendVerificationCode } from "../utils/sendVerificationCode.js";
 import { sendToken } from "../utils/sendToken.js";
 import { generateFOrgotPasswordTemplate } from "../utils/emailTemplates.js";
-
+import { sendEmail } from "../utils/sendEmail.js";
 
 export const register = catchAsyncErrors(async (req, res, next) => {
   try {
     const { name, email, password } = req.body;
+
     if (!name || !email || !password) {
       return next(new ErrorHandler("Please provide all required fields.", 400));
     }
-    const isRegistered = await User.findOne({ email });
-    if (isRegistered) {
-      return next(new ErrorHandler("User already registered. Please login.", 400));
+
+    let existingUser = await User.findOne({ email });
+
+    if (existingUser && existingUser.accountVerified) {
+      return next(new ErrorHandler("User already registered and verified. Please login.", 400));
     }
-    const registraionsAttemptsByUser = await User.find({ email, accountVerified: false, });
-    if (registraionsAttemptsByUser.length >= 5) {
-      return next(new ErrorHandler("Maximum registration attempts exceeded. Please contact support.", 400));
+
+    // Fix: Handle existing UNVERIFIED user (resend code logic)
+    if (existingUser && !existingUser.accountVerified) {
+        const registraionsAttemptsByUser = await User.find({ email, accountVerified: false, });
+        if (registraionsAttemptsByUser.length >= 5) {
+          return next(new ErrorHandler("Maximum registration attempts exceeded. Please contact support.", 400));
+        }
+
+        // Update user's password and generate a new verification code
+        existingUser.password = await bcrypt.hash(password, 10);
+        existingUser.name = name;
+        const verificationCode = existingUser.generateVerificationCode();
+        await existingUser.save();
+
+        // Return after calling the utility, preventing the ERR_HTTP_HEADERS_SENT crash
+        return sendVerificationCode(verificationCode, email, res);
     }
+
+    // New User Registration
     if (password.length < 8 || password.length > 16) {
-      return next(new ErrorHandler("Password must be at least 6 characters long.", 400));
+      return next(new ErrorHandler("Password must be between 8 and 16 characters long.", 400));
     }
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = new User({
@@ -31,9 +50,12 @@ export const register = catchAsyncErrors(async (req, res, next) => {
       email,
       password: hashedPassword,
     });
-    const verificationCode = await newUser.generateVerificationCode();
+    const verificationCode = newUser.generateVerificationCode();
     await newUser.save();
-    sendVerificationCode(verificationCode, email, res);
+
+    // Return after calling the utility, preventing the ERR_HTTP_HEADERS_SENT crash
+    return sendVerificationCode(verificationCode, email, res);
+
   } catch (error) {
     next(error);
   }
@@ -50,7 +72,7 @@ export const verifyOTP = catchAsyncErrors(async (req, res, next) => {
       accountVerified: false,
     }).sort({ createdAt: -1 });
 
-    if (!userAllEntries) {
+    if (!userAllEntries || userAllEntries.length === 0) {
       return next(new ErrorHandler("User not found.", 404));
     }
 
@@ -122,7 +144,8 @@ export const logout = catchAsyncErrors(async (req, res, next) => {
 
 export const getUser = catchAsyncErrors(async (req, res, next) => {
   const user = req.user;
-  req.status(200).json({
+  // CRITICAL FIX: Changed 'req.status(200)' to 'res.status(200)' to prevent server crash on refresh.
+  res.status(200).json({
     sucess: true,
     user,
   })
@@ -133,7 +156,8 @@ export const forgotPassword = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler("Please provide your email.", 400));
   }
 
-  const user = await user.findOne({
+  // CRITICAL FIX: Changed 'user.findOne' to 'User.findOne' to use the Mongoose Model.
+  const user = await User.findOne({
     email: req.body.email,
     accountVerified: true,
   });

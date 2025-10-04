@@ -1,8 +1,8 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import settingIcon from "../assets/setting.png";
 import userIcon from "../assets/user.png";
 import { useDispatch, useSelector } from "react-redux";
-import toggleSettingPopup from "../store/slices/popUpSlice";
+import { toggleSettingPopup } from "../store/slices/popUpSlice";
 
 const Header = () => {
   const dispatch = useDispatch();
@@ -20,7 +20,7 @@ const Header = () => {
       const ampm = now.getHours() >= 12 ? "PM" : "AM";
       setCurrentTime(`${hours}:${minutes}:${ampm}`);
 
-      const options = { month: "short", dat: "numeric", year: "numeric" };
+      const options = { month: "short", day: "numeric", year: "numeric" };
       setCurrentDate(now.toLocaleDateString("en-US", options));
     };
     updateDateTime();
@@ -36,7 +36,7 @@ const Header = () => {
         <div className="flex items-center gap-2">
           <img src={userIcon} alt="user-icon" className="w-8 h-8" />
           <div className="flex flex-col">
-            <span className="text-sm font-medium sm:text-lg lg:text-xlsm:font-semibold">
+            <span className="text-sm font-medium sm:text-lg lg:text-xl sm:font-semibold">
               {" "}
               {user && user.name}{" "}
             </span>
@@ -55,8 +55,8 @@ const Header = () => {
           <img
             src={settingIcon}
             alt="settingIcon"
-            className="w-8 h-8"
-            onClick={() => toggleSettingPopup()}
+            className="w-8 h-8 cursor-pointer"
+            onClick={() => dispatch(toggleSettingPopup())}
           />
         </div>
       </header>

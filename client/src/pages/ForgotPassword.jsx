@@ -29,50 +29,51 @@ const ForgotPassword = () => {
       toast.error(error);
       dispatch(resetAuthSlice());
     }
-  }, [dispatch, isAuthenticated, error, loading]);
+  }, [dispatch, isAuthenticated, error, loading, message]);
   if (isAuthenticated) {
     return <Navigate to={"/"} />;
   }
 
   return (
     <>
-      <div>
+      <div className="flex flex-col justify-center md:flex-row h-screen">
         {/*LEFT SIDE  */}
-        <div>
-          <div>
-            <div>
-              <img src={logo_with_title} alt="logo" />
+        <div className="hidden w-full md:w-1/2 bg-black text-white md:flex flex-col items-center justify-center p-8 rounded-tr-[80px] rounded-br-[80px]">
+          <div className="text-center h-[376px]">
+            <div className="flex justify-center mb-12">
+              <img src={logo_with_title} alt="logo" className="mb-12 h-44 w-auto" />
             </div>
             <h3>"Your premier digital library for reading books."</h3>
           </div>
         </div>
 
         {/* RIGHT SIDE */}
-
-        <div>
+        <div className="w-full md:w-1/2 flex items-center justify-center bg-white p-8 relative">
           <Link
             to={"/login"}
-            className="border-2 border-black rounded-3x1 font-bold w-52 py-2 px-4 fixed top-10 -left-28 hover:bg-black hover:text-white transition duration-300 text-end"
+            className="border-2 border-black rounded-3xl font-bold w-52 py-2 px-4 fixed top-10 right-1/2 transform translate-x-1/2 md:right-auto md:left-10 hover:bg-black hover:text-white transition duration-300 text-center"
           >
             Back
           </Link>
-          <div>
-            <div>
-              <div>
-                <img src={logo} alt="logo" />
+          <div className="max-w-sm w-full">
+            <div className="flex justify-center mb-12 ">
+              <div className="rounded-full flex items-center justify-center">
+                <img src={logo} alt="logo" className="h-24 w-auto" />
               </div>
             </div>
-            <h1>Forgot Password</h1>
-            <p>Please enter your email</p>
+            <h1 className="text-4xl font-medium text-center mb-12 overflow-hidden ">
+              Forgot Password
+            </h1>
+            <p className="text-center mb-4">Please enter your email</p>
             <form onSubmit={handleForgotPassword}>
-              <div>
+              <div className="mb-4">
                 <input
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Email"
-                  className="w-full px-4 py-3 border border-black rounded-md  focus:outline-none"
+                  className="w-full px-4 py-3 border border-black rounded-md focus:outline-none"
                 />
               </div>
               <button
