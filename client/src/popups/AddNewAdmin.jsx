@@ -42,7 +42,6 @@ const AddNewAdmin = () => {
       </header>
     </div>
     </div>
-
   </h1>
 
   </>;
