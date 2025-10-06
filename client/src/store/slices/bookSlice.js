@@ -64,10 +64,14 @@ export const addBook = (data)=> async(dispatch)=>{
       "Content-Type": "application/json"
     }
   }).then(res=>{
-    bookSlice.actions.addBookSuccess(res.data.message);
+    dispatch(bookSlice.actions.addBookSuccess(res.data.message));
   }).catch(err=>{
     dispatch(bookSlice.actions.addBookFailed(err.response.data.message));
   });
+};
+
+export const resetBookSlice =  () => (dispatch) => {
+  dispatch(bookSlice.actions.resetBookSlice());
 };
 
 export default bookSlice.reducer;
