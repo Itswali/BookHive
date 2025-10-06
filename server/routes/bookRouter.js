@@ -6,6 +6,7 @@ const router = express.Router();
 
 router.post("/admin/add", isAuthenticated, isAuthorized("Admin"), addBook);
 router.get("/all", isAuthenticated, getAllBook);
-router.delete("delete/:id", isAuthenticated, isAuthorized("Admin"), deleteBook);
+// ⭐️ FIX: Changed "delete/:id" to "/delete/:id" for a valid path
+router.delete("/delete/:id", isAuthenticated, isAuthorized("Admin"), deleteBook);
 
 export default router;
