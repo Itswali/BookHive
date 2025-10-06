@@ -20,10 +20,11 @@ const ResetPassword = () => {
 
   const handleResetPassword = (e) => {
     e.preventDefault();
-    const formData = new FormData();
-    formData.append("password", password);
-    formData.append("confirmPassword", confirmPassword);
-    dispatch(resetPassword(formData, token));
+
+    const resetData = new FormData();
+    resetData.append("password", password);
+    resetData.append("confirmPassword", confirmPassword);
+    dispatch(resetPassword(resetData, token));
   };
 
   useEffect(() => {

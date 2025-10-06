@@ -1,9 +1,9 @@
 import React from 'react'
 
-const RecordBookPopup = () => {
+const RecordBookPopup = ({bookId}) => {
   return (
     <div>
-      
+
     </div>
   )
 }

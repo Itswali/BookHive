@@ -13,13 +13,16 @@ import {
   resetBorrowSlice,
 } from "../store/slices/borrowSlice";
 import Header from "../layout/Header";
+import AddBookPopup from "../popups/AddBookPopup";
+import ReadBookPopup from "../popups/ReadBookPopup";
+import RecordBookPopup from "../popups/RecordBookPopup";
 
 const BookManagement = () => {
   const dispatch = useDispatch();
 
   const { loading, error, message, books } = useSelector((state) => state.book);
   const { isAuthenticated, user } = useSelector((state) => state.auth);
-  const { settingPopup, readBookPopup, recordBookPopup } = useSelector(
+  const { addBookPopup, readBookPopup, recordBookPopup } = useSelector(
     (state) => state.popup
   );
   const {
@@ -152,6 +155,9 @@ const BookManagement = () => {
           <h3 className="text-3xl mt-5 font-medium"> No Books found in library!</h3>
         )}
       </main>
+        {addBookPopup && <AddBookPopup /> }
+        {readBookPopup && <ReadBookPopup book={readBook} /> }
+        {recordBookPopup && <RecordBookPopup bookId={borrowBookId} /> }
     </>
   );
 };
