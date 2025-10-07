@@ -4,10 +4,11 @@ import { Borrow } from "../models/borrowModel.js";
 import { Book } from "../models/bookModel.js";
 import { User } from "../models/userModel.js";
 import { calculateFine } from "../utils/fineCalculator.js";
+import mongoose from "mongoose"; // 1. IMPORT MONGOOSE FOR ROBUST ID COMPARISON
 
 
 export const recordBorrowedBook = catchAsyncErrors(async (req, res, next) => {
-   const { id } = req.params;
+  const { id } = req.params; // book ID
   const { email } = req.body;
 
     const book  = await Book.findById(id);
@@ -21,8 +22,13 @@ export const recordBorrowedBook = catchAsyncErrors(async (req, res, next) => {
     if (book.quantity === 0) {
       return next(new ErrorHandler("Book not availible.", 404));
     }
+
+    // Ensure ID is an ObjectId for robust comparison
+    const objectBookId = new mongoose.Types.ObjectId(id);
+
+    // FIX: Use .equals() for reliable ObjectId comparison when checking if already borrowed
     const isAlreadyBorrowed = user.borrowedBooks.find(
-      (b) => b.bookId.toString() === id && b.returned === false
+      (b) => objectBookId.equals(b.bookId) && b.returned === false
     );
     if(isAlreadyBorrowed) {
       return next(new ErrorHandler("Book already borrowed.", 400));
@@ -61,8 +67,12 @@ export const recordBorrowedBook = catchAsyncErrors(async (req, res, next) => {
 export const returnBorrowBook = catchAsyncErrors(async (req, res, next) => {
   const { bookId } = req.params;
   const { email } = req.body;
-  const book = await Book.findById(bookId);
 
+  // Ensure bookId is a valid ObjectId for safety
+  const objectBookId = new mongoose.Types.ObjectId(bookId);
+
+  // 1. Initial Lookups
+  const book = await Book.findById(objectBookId);
   if (!book) {
     return next (new ErrorHandler("Book not found.", 404));
   }
@@ -70,34 +80,51 @@ export const returnBorrowBook = catchAsyncErrors(async (req, res, next) => {
   if (!user) {
     return next(new ErrorHandler("User Not Found.", 404));
   }
+
+  // 2. Find Embedded Borrowed Book (Must be active/not returned)
+  // FIX: Use .equals() for reliable ObjectId comparison
   const borrowedBook = user.borrowedBooks.find(
-    (b) => b.bookId.toString() === bookId && b.returned === false
+    (b) => objectBookId.equals(b.bookId) && b.returned === false
   );
   if(!borrowedBook) {
     return next( new ErrorHandler("You have not borrowed this book.", 404));
   }
-  borrowBook.returned = true;
-  await  user.save();
 
-  book.quantity +=1;
-  book.availability = book.quantity > 0;
-  await book.save();
-
+  // 3. Find Global Borrow Record (Must be active/not returned)
+  // FIX: Use ObjectId directly in the query
   const borrow = await Borrow.findOne({
-    book: bookId,
+    book: objectBookId,
     "user.email": email,
     returnDate: null,
   });
   if(!borrow){
-    return next(new ErrorHandler("You have not borroweed this book.", 400));
+    return next(new ErrorHandler("You have not borrowed this book.", 400));
   }
+
+  // 4. --- ALL VALIDATION PASSED --- PERFORM UPDATES AND SAVES
+
+  // Update embedded record in User document
+  borrowedBook.returned = true;
+  // Update Book quantity
+  book.quantity +=1;
+  book.availability = book.quantity > 0;
+
+  // Update global Borrow record
   borrow.returnDate = new Date();
   const fine = calculateFine(borrow.dueDate);
   borrow.fine = fine;
+
+  // Save all changes
+  await  user.save();
+  await book.save();
   await borrow.save();
+
+  // 5. Send Success Response
   res.status(200).json({
     sucess: true,
-    message: fine !== 0 ? `The book has been returned sucessfully.The total charges, including fine are Pkr${ fine + book.price}` : `The book has been returned sucessfully. The total charges are Pkr${book.price}`,
+    message: fine !== 0
+      ? `The book has been returned successfully. The total charges, including fine are Pkr${ fine + book.price}`
+      : `The book has been returned successfully. The total charges are Pkr${book.price}`,
   });
 });
 
@@ -119,4 +146,3 @@ export const getBorrowedBooksForAdmin = catchAsyncErrors(async (req, res, next) 
     borrowedBooks,
   });
 });
-

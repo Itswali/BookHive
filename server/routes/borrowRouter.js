@@ -12,8 +12,7 @@ router.get("/borrowed-books-by-users", isAuthenticated, isAuthorized("Admin"), g
 
 router.get("/my-borrowed-books", isAuthenticated,  borrowedBooks);
 
-router.put("/return-borrowed-book/:bookId", isAuthenticated, isAuthorized("Admin"), returnBorrowBook);
-
+// router.put("/return-borrowed-book/:bookId", isAuthenticated, returnBorrowBook);
+router.put("/return-book/:bookId", isAuthenticated, returnBorrowBook);
 
 export default router;
-
