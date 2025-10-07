@@ -1,3 +1,5 @@
+// app.js
+
 import express from "express";
 import {config} from "dotenv";
 import cookieParser from "cookie-parser";
@@ -8,6 +10,7 @@ import authRouter from "./routes/authRouter.js";
 import bookRouter from "./routes/bookRouter.js";
 import borrowRouter from "./routes/borrowRouter.js";
 import userRouter from "./routes/userRouter.js";
+import favoriteRouter from "./routes/favoriteRouter.js"; // <--- NEW IMPORT
 import expressFileupload from "express-fileupload";
 import { use } from "bcrypt/promises.js";
 import { notifyUsers } from "./services/notifyUsers.js";
@@ -39,7 +42,7 @@ app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/book", bookRouter);
 app.use("/api/v1/borrow", borrowRouter);
 app.use("/api/v1/user", userRouter);
-
+app.use("/api/v1/favorite", favoriteRouter); // <--- NEW ROUTE MOUNT
 
 notifyUsers();
 removeUnverifiedAccounts();
