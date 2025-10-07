@@ -11,6 +11,7 @@ import BookManagement from "../components/BookManagement"
 import Catalog from "../components/Catalog"
 import Users from "../components/Users"
 import MyBorrowedBooks from "../components/MyBorrowedBooks";
+import MyFavorites from "../components/MyFavorites"; // <--- NEW IMPORT
 
 const Home = () => {
   const [isSideBarOpen, setIsSideBarOpen] = useState(false);
@@ -41,17 +42,15 @@ const Home = () => {
             switch (selectedComponent) {
               case "Dashboard":
                 return user?.role === "User" ? (
-                  <UserDashboard/>
+                  <UserDashboard setSelectedComponent={setSelectedComponent} />
                 ) : (
-                  <AdminDashboard/>
+                  <AdminDashboard setSelectedComponent={setSelectedComponent} />
                 )
               case "Books":
                 return <BookManagement />
               case "Catalog":
-                if(user.role === "Admin") {
                   return <Catalog />
-                }
-                return null;
+
               case "Users":
                 if(user.role === "Admin") {
                   return <Users />
@@ -59,6 +58,8 @@ const Home = () => {
                 return null;
               case "My Borrowed Books":
                 return <MyBorrowedBooks />
+              case "My Favorites":
+                return <MyFavorites />
               default:
                 return user?.role === "User" ? (
                   <UserDashboard/>

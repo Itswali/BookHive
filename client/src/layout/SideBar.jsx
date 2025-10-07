@@ -40,15 +40,14 @@ const SideBar = ({ isSideBarOpen, setIsSideBarOpen, setSelectedComponent }) => {
   return (
     <>
       <aside
-        className={`${
-          isSideBarOpen ? "left-0" : "-left-full"
-        } z-10 transition-all duration-700 md:relative md:left-0 flex w-64 bg-black text-white flex-col h-full`}
-        style={{ position: "fixed" }}
+        className={`fixed top-0 left-0 bg-black text-white h-screen w-64 z-20 transform ${
+          isSideBarOpen ? "translate-x-0" : "-translate-x-full"
+        } md:translate-x-0 transition-transform duration-300 ease-in-out`}
       >
-        <div className="px-6 py-4 my-8">
-          <img src={logo_with_title} alt="logo" />
+        <div className="flex justify-center p-6">
+          <img src={logo_with_title} alt="Logo" className="h-28 w-auto" />
         </div>
-        <nav className="flex-1 px-6 space-y-2">
+        <nav className="flex flex-col space-y-3 px-6 py-4">
           <button
             className="w-full py-2 font-medium bg-transparent rounded-md hover:cursor-pointer flex items-center space-x-2"
             onClick={() => setSelectedComponent("Dashboard")}
@@ -63,15 +62,20 @@ const SideBar = ({ isSideBarOpen, setIsSideBarOpen, setSelectedComponent }) => {
             <img src={bookIcon} alt="icon" />
             <span>Books</span>
           </button>
+
+          {/* CATALOG BUTTON MOVED HERE - Visible to ALL authenticated users */}
+          {isAuthenticated && (
+            <button
+              className="w-full py-2 font-medium bg-transparent rounded-md hover:cursor-pointer flex items-center space-x-2"
+              onClick={() => setSelectedComponent("Catalog")}
+            >
+              <img src={catalogIcon} alt="icon" />
+              <span>Catalog</span>
+            </button>
+          )}
+
           {isAuthenticated && user?.role === "Admin" && (
             <>
-              <button
-                className="w-full py-2 font-medium bg-transparent rounded-md hover:cursor-pointer flex items-center space-x-2"
-                onClick={() => setSelectedComponent("Catalog")}
-              >
-                <img src={catalogIcon} alt="icon" />
-                <span>Catalog</span>
-              </button>
               <button
                 className="w-full py-2 font-medium bg-transparent rounded-md hover:cursor-pointer flex items-center space-x-2"
                 onClick={() => setSelectedComponent("Users")}
@@ -79,17 +83,27 @@ const SideBar = ({ isSideBarOpen, setIsSideBarOpen, setSelectedComponent }) => {
                 <img src={usersIcon} alt="icon" />
                 <span>Users</span>
               </button>
-
               <button
                 className="w-full py-2 font-medium bg-transparent rounded-md hover:cursor-pointer flex items-center space-x-2"
                 onClick={() => dispatch(toggleAddNewAdminPopup())}
               >
-                <RiAdminFill className="w-6 h-6" /> <span>Add New Admin</span>
+                <RiAdminFill className="h-6 w-6" />
+                <span>Add New Admin</span>
               </button>
             </>
           )}
+
           {isAuthenticated && user?.role === "User" && (
             <>
+              {/* The original Catalog button was here and is now removed. */}
+
+              <button
+                className="w-full py-2 font-medium bg-transparent rounded-md hover:cursor-pointer flex items-center space-x-2"
+                onClick={() => setSelectedComponent("My Favorites")}
+              >
+                <img src={catalogIcon} alt="icon" /> {/* Using catalog icon, recommend heart icon asset */}
+                <span>My Favorites</span>
+              </button>
               <button
                 className="w-full py-2 font-medium bg-transparent rounded-md hover:cursor-pointer flex items-center space-x-2"
                 onClick={() => setSelectedComponent("My Borrowed Books")}

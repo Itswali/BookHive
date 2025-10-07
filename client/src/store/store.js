@@ -4,6 +4,7 @@ import popupReducer from "./slices/popUpSlice";
 import userReducer from "./slices/userSlice";
 import bookReducer from "./slices/bookSlice";
 import borrowReducer from "./slices/borrowSlice";
+import favoriteReducer from "./slices/favoriteSlice"; // <--- NEW IMPORT
 
 export const store = configureStore({
   reducer: {
@@ -11,6 +12,7 @@ export const store = configureStore({
     popup: popupReducer,
     user: userReducer,
     book: bookReducer,
-    borrow: borrowReducer
+    borrow: borrowReducer,
+    favorite: favoriteReducer, // <--- NEW REDUCER
   },
 });

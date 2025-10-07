@@ -1,9 +1,17 @@
 import React from "react";
 import { useDispatch } from "react-redux";
 import { toggleReadBookPopup } from "../store/slices/popUpSlice";
+import { useNavigate } from "react-router-dom"; // <--- NEW IMPORT
 
 const ReadBookPopup = ({ book }) => {
   const dispatch = useDispatch();
+  const navigate = useNavigate(); // <--- NEW HOOK
+
+  const handleReadBook = () => { // <--- NEW HANDLER
+    dispatch(toggleReadBookPopup());
+    navigate(`/read-book/${book._id}`);
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 p-5 flex items-center justify-center z-50">
       <div className="w-11/12 bg-white rounded-lg shadow-lg sm:w-1/2 lg:w-1/3">
@@ -43,8 +51,24 @@ const ReadBookPopup = ({ book }) => {
             </p>
           </div>
         </div>
-        <div className="flex justify-end px-6 py-4 bg-gray-100 rounded-b-lg">
-          <button className="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300" type="button" onClick={() => dispatch(toggleReadBookPopup())}>Close</button>
+        <div className="flex justify-end px-6 py-4 bg-gray-100 rounded-b-lg space-x-4"> {/* <--- Added space-x-4 */}
+          {/* --- NEW READ BUTTON --- */}
+          {book && book.bookFile && book.bookFile.url && (
+            <button
+              onClick={handleReadBook}
+              className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800"
+            >
+              Read Book Online
+            </button>
+          )}
+          {/* --- END NEW READ BUTTON --- */}
+          <button
+            className="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300"
+            type="button"
+            onClick={() => dispatch(toggleReadBookPopup())}
+          >
+            Close
+          </button>
         </div>
       </div>
     </div>

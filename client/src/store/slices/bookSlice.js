@@ -39,6 +39,17 @@ const bookSlice = createSlice({
       state.loading = false;
       state.error = action.payload;
     },
+    // New Reducers for single book fetch
+    fetchSingleBookRequest(state){
+      state.loading = true;
+      state.error = null;
+      state.message = null;
+    },
+    fetchSingleBookFailed(state, action){
+      state.loading = false;
+      state.error = action.payload;
+    },
+    // End New Reducers
     resetBookSlice(state){
       state.error =null;
       state.message = null;
@@ -57,13 +68,12 @@ export const fetchAllBooks = () => async (dispatch)=> {
   });
 };
 
+// FIX: Removed 'headers: { "Content-Type": "application/json" }' to allow FormData with file upload
 export const addBook = (data)=> async(dispatch)=>{
   dispatch(bookSlice.actions.addBookRequest());
   await axios.post("http://localhost:4000/api/v1/book/admin/add", data, {
     withCredentials: true,
-    headers: {
-      "Content-Type": "application/json"
-    }
+    // Headers are now correctly omitted for multipart/form-data
   }).then(res=>{
     dispatch(bookSlice.actions.addBookSuccess(res.data.message));
     dispatch(toggleAddBookPopup());
@@ -72,8 +82,21 @@ export const addBook = (data)=> async(dispatch)=>{
   });
 };
 
-export const resetBookSlice =  () => (dispatch) => {
-  dispatch(bookSlice.actions.resetBookSlice());
+// NEW THUNK: Fetch single book for the OnlineReader component
+export const getSingleBook = (bookId) => async (dispatch) => {
+  dispatch(bookSlice.actions.fetchSingleBookRequest());
+  try {
+    const res = await axios.get(`http://localhost:4000/api/v1/book/${bookId}`, { withCredentials: true });
+    // Success payload can be returned directly to the component
+    return res.data.book;
+  } catch (error) {
+    dispatch(bookSlice.actions.fetchSingleBookFailed(error.response.data.message));
+    toast.error(error.response.data.message);
+    return null;
+  }
 };
+
+
+export const { resetBookSlice } = bookSlice.actions;
 
 export default bookSlice.reducer;

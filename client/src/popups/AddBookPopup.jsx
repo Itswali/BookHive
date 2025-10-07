@@ -10,6 +10,16 @@ const AddBookPopup = () => {
   const [price, setPrice] = useState("");
   const [quantity, setQuantity] = useState("");
   const [description, setDescription] = useState("");
+  const [bookFile, setBookFile] = useState(null); // <--- NEW STATE
+  const [bookFilePreview, setBookFilePreview] = useState(null); // <--- NEW STATE
+
+  const handleBookFileChange = (e) => { // <--- NEW HANDLER
+    const file = e.target.files[0];
+    if (file) {
+      setBookFile(file);
+      setBookFilePreview(file.name);
+    }
+  };
 
   const handleAddBook = (e) => {
     e.preventDefault();
@@ -19,6 +29,9 @@ const AddBookPopup = () => {
     formData.append("price", price);
     formData.append("quantity", quantity);
     formData.append("description", description);
+    if (bookFile) { // <--- NEW APPEND
+      formData.append("bookFile", bookFile);
+    }
     dispatch(addBook(formData));
     dispatch(fetchAllBooks());
   };
@@ -44,25 +57,52 @@ const AddBookPopup = () => {
               </div>
 
               <div className="mb-4">
-               <label className="block text-gray-900 font-medium">Book Author</label>
-               <input type="text" value={author} onChange={(e) => setAuthor(e.target.value)} placeholder="Book Author" className="w-full px-4 py-2 border-2 border-black rounded-md" required />
-             </div>
+                <label className="block text-gray-900 font-medium">Author</label>
+                <input
+                  type="text"
+                  value={author}
+                  onChange={(e) => setAuthor(e.target.value)}
+                  placeholder="Author"
+                  className="w-full px-4 py-2 border-2 border-black rounded-md"
+                  required
+                />
+              </div>
 
-             <div className="mb-4">
-               <label className="block text-gray-900 font-medium">Book Price</label>
-               <input type="number" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="Book Price" className="w-full px-4 py-2 border-2 border-black rounded-md" required />
-             </div>
+              <div className="mb-4">
+                <label className="block text-gray-900 font-medium">Price</label>
+                <input
+                  type="number"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                  placeholder="Price"
+                  className="w-full px-4 py-2 border-2 border-black rounded-md"
+                  required
+                />
+              </div>
 
-             <div className="mb-4">
-               <label className="block text-gray-900 font-medium">Book Quantity</label>
-               <input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} placeholder="Book Quantity" className="w-full px-4 py-2 border-2 border-black rounded-md" required />
-             </div>
+              <div className="mb-4">
+                <label className="block text-gray-900 font-medium">Book Quantity</label>
+                <input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} placeholder="Book Quantity" className="w-full px-4 py-2 border-2 border-black rounded-md" required />
+              </div>
 
-             <div className="mb-4">
-               <label className="block text-gray-900 font-medium">Book Description</label>
-               <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Book's Description" rows={4} className="w-full px-4 py-2 border-2 border-black rounded-md" />
+              <div className="mb-4">
+                <label className="block text-gray-900 font-medium">Book Description</label>
+                <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Book's Description" rows={4} className="w-full px-4 py-2 border-2 border-black rounded-md" />
 
-             </div>
+              </div>
+
+              {/* --- NEW INPUT FIELD FOR PDF --- */}
+              <div className="mb-4">
+                <label className="block text-gray-900 font-medium">Book PDF File (Optional)</label>
+                <input
+                  type="file"
+                  accept="application/pdf"
+                  onChange={handleBookFileChange}
+                  className="w-full px-4 py-2 border-2 border-black rounded-md"
+                />
+                {bookFilePreview && <p className="text-sm text-gray-500 mt-1">Selected File: {bookFilePreview}</p>}
+              </div>
+              {/* --- END NEW INPUT FIELD FOR PDF --- */}
 
               <div className="flex justify-end space-x-4">
                 <button

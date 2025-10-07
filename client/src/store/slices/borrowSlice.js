@@ -1,6 +1,8 @@
 import { createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
 import { toggleRecordBookPopup } from "./popUpSlice";
+// NEW IMPORT: Assumes bookSlice is in the same directory and contains fetchAllBooks
+import { fetchAllBooks } from "./bookSlice";
 
 const borrowSlice = createSlice({
   name: "borrow",
@@ -91,6 +93,31 @@ export const fetchUserBorrowedBooks = () => async (dispatch) => {
     dispatch(borrowSlice.actions.fetchUserBorrowedBooksFailed(err.response.data.message));
   });
 };
+
+// NEW ACTION: User-initiated borrow book
+export const borrowBook = (id) => async (dispatch) => {
+  dispatch(borrowSlice.actions.recordBookRequest());
+  try {
+    // API endpoint for user-initiated borrow
+    const res = await axios.post(`http://localhost:4000/api/v1/borrow/user-borrow-book/${id}`, {}, {
+      withCredentials: true,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    // Dispatch success
+    dispatch(borrowSlice.actions.recordBookSuccess(res.data.message));
+    // Re-fetch all books to update availability flag in the Catalog
+    dispatch(fetchAllBooks());
+    // Re-fetch user's borrowed books list for the MyBorrowedBooks component
+    dispatch(fetchUserBorrowedBooks());
+
+  } catch (err) {
+    dispatch(borrowSlice.actions.recordBookFailed(err.response.data.message));
+  }
+};
+
 
 export const fetchAllBorrowedBooks = () => async (dispatch) => {
   dispatch(borrowSlice.actions.fetchAllBorrowedBooksRequest());
