@@ -1,3 +1,5 @@
+// models/bookModel.js
+
  import mongoose from "mongoose";
 
 
@@ -27,6 +29,17 @@
   availability: {
     type: Boolean,
     default: true,
+  },
+  // --- NEW FIELDS FOR DIGITAL BOOK (PDF) ---
+  bookFile: {
+    public_id: {
+      type: String,
+      required: true, // Make sure to validate this during Admin upload
+    },
+    url: {
+      type: String,
+      required: true,
+    }
   },
 },
   {
