@@ -66,7 +66,14 @@ export const recordBorrowedBook = catchAsyncErrors(async (req, res, next) => {
 
 export const returnBorrowBook = catchAsyncErrors(async (req, res, next) => {
   const { bookId } = req.params;
-  const { email } = req.body;
+
+  // FIX: Determine user identity. Prioritize authenticated user's email,
+  // otherwise, fall back to email provided in the body (for Admin use).
+  const userEmail = req.user?.email || req.body.email;
+
+  if (!userEmail) {
+    return next(new ErrorHandler("User identity not found. Please provide an email or ensure you are logged in.", 400));
+  }
 
   // Ensure bookId is a valid ObjectId for safety
   const objectBookId = new mongoose.Types.ObjectId(bookId);
@@ -76,7 +83,9 @@ export const returnBorrowBook = catchAsyncErrors(async (req, res, next) => {
   if (!book) {
     return next (new ErrorHandler("Book not found.", 404));
   }
-  const user = await User.findOne({ email, accountVerified: true });
+
+  // Use the determined email to find the user
+  const user = await User.findOne({ email: userEmail, accountVerified: true });
   if (!user) {
     return next(new ErrorHandler("User Not Found.", 404));
   }
@@ -91,14 +100,14 @@ export const returnBorrowBook = catchAsyncErrors(async (req, res, next) => {
   }
 
   // 3. Find Global Borrow Record (Must be active/not returned)
-  // FIX: Use ObjectId directly in the query
+  // FIX: Use ObjectId directly in the query and the determined userEmail
   const borrow = await Borrow.findOne({
     book: objectBookId,
-    "user.email": email,
+    "user.email": userEmail,
     returnDate: null,
   });
   if(!borrow){
-    return next(new ErrorHandler("You have not borrowed this book.", 400));
+    return next(new ErrorHandler("The active borrowing record was not found.", 400));
   }
 
   // 4. --- ALL VALIDATION PASSED --- PERFORM UPDATES AND SAVES

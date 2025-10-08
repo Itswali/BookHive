@@ -6,6 +6,7 @@ import Login from "./pages/Login";
 import OTP from "./pages/OTP";
 import Register from "./pages/Register";
 import ResetPassword from "./pages/ResetPassword";
+import OnlineReader from "./pages/OnlineReader";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useDispatch, useSelector } from "react-redux";
@@ -37,6 +38,7 @@ const App = () => {
         <Route path="/password/forgot" element={<ForgotPassword />} />
         <Route path="/otp-verification/:email" element={<OTP />} />
         <Route path="/password/reset/:token" element={<ResetPassword />} />
+        <Route path="/read-book/:bookId" element={<OnlineReader />} />
       </Routes>
       <ToastContainer theme="dark" />
     </Router>

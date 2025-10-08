@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { BookA, NotebookPen } from "lucide-react";
-import { Heart } from "lucide-react"; // <--- NEW IMPORT (Outline heart)
-import { FaHeart } from "react-icons/fa"; // <--- NEW IMPORT (Filled heart)
+// Import new icons: Hand for Borrow, Trash2 for Delete
+import { BookA, NotebookPen, Heart, Hand, Trash2 } from "lucide-react";
+import { FaHeart } from "react-icons/fa";
 import { useDispatch, useSelector } from "react-redux";
 import {
   toggleAddBookPopup,
@@ -9,12 +9,14 @@ import {
   toggleRecordBookPopup,
 } from "../store/slices/popUpSlice";
 import { toast } from "react-toastify";
-import { fetchAllBooks, resetBookSlice } from "../store/slices/bookSlice";
+// Imported deleteBook
+import { fetchAllBooks, resetBookSlice, deleteBook } from "../store/slices/bookSlice";
 import {
   fetchAllBorrowedBooks,
   resetBorrowSlice,
+  borrowBook, // Imported borrowBook for User action
 } from "../store/slices/borrowSlice";
-import { addToFavorites, removeFromFavorites, resetFavoriteSlice } from "../store/slices/favoriteSlice"; // <--- NEW IMPORT
+import { addToFavorites, removeFromFavorites, resetFavoriteSlice, fetchMyFavorites } from "../store/slices/favoriteSlice";
 import Header from "../layout/Header";
 import AddBookPopup from "../popups/AddBookPopup";
 import ReadBookPopup from "../popups/ReadBookPopup";
@@ -32,38 +34,38 @@ const BookManagement = () => {
     myFavorites,
     error: favoriteError,
     message: favoriteMessage
-  } = useSelector((state) => state.favorite); // <--- NEW SELECTOR
+  } = useSelector((state) => state.favorite);
 
-  const isFavorite = (bookId) => myFavorites.some(favBook => favBook._id === bookId); // <--- NEW HELPER
+  const [readBook, setReadBook] = useState(null);
+  const [borrowBookId, setBorrowBookId] = useState(null);
 
-  const {
-    loading: borrowSliceLoading,
-    error: borrowSliceError,
-    message: borrowSliceMessage,
-  } = useSelector((state) => state.borrow);
-
-  const [readBook, setReadBook] = useState({});
-  const openReadPopup = (id) => {
-    const book = books.find((book) => book._id === id);
-    setReadBook(book);
-    dispatch(toggleReadBookPopup());
-  };
-
-  const [borrowBookId, setBorrowBookId] = useState({});
-  const openRecordBookPopup = (id) => {
-    setBorrowBookId(id);
-    dispatch(toggleRecordBookPopup());
-  };
-
-  // <--- NEW FAVORITE HANDLER
-  const handleToggleFavorite = (bookId) => {
-    if (isFavorite(bookId)) {
-      dispatch(removeFromFavorites(bookId));
+  // --- NEW: User Borrow Handler ---
+  const handleBorrowBook = (bookId) => {
+    const book = books.find(b => b._id === bookId);
+    if(book && book.quantity > 0) {
+      dispatch(borrowBook(bookId));
     } else {
-      dispatch(addToFavorites(bookId));
+      toast.error("This book is currently out of stock.");
     }
   };
-  // END NEW FAVORITE HANDLER --->
+
+  // --- NEW: Admin Delete Handler ---
+  const handleDeleteBook = (bookId) => {
+    if (window.confirm("Are you sure you want to delete this book? This action cannot be undone.")) {
+      dispatch(deleteBook(bookId));
+    }
+  };
+  // --- END NEW HANDLERS ---
+
+  useEffect(() => {
+    dispatch(fetchAllBooks());
+    if(user?.role === "Admin") {
+        dispatch(fetchAllBorrowedBooks());
+    }
+    if(user?.role === "User") {
+        dispatch(fetchMyFavorites());
+    }
+  }, [dispatch, user?.role]);
 
   useEffect(() => {
     if (error) {
@@ -74,15 +76,6 @@ const BookManagement = () => {
       toast.success(message);
       dispatch(resetBookSlice());
     }
-    if (borrowSliceError) {
-      toast.error(borrowSliceError);
-      dispatch(resetBorrowSlice());
-    }
-    if (borrowSliceMessage) {
-      toast.success(borrowSliceMessage);
-      dispatch(resetBorrowSlice());
-    }
-    // <--- NEW FAVORITE ERROR/MESSAGE HANDLER
     if (favoriteError) {
       toast.error(favoriteError);
       dispatch(resetFavoriteSlice());
@@ -91,15 +84,34 @@ const BookManagement = () => {
       toast.success(favoriteMessage);
       dispatch(resetFavoriteSlice());
     }
-    // END NEW FAVORITE ERROR/MESSAGE HANDLER --->
+  }, [dispatch, error, message, favoriteError, favoriteMessage]);
 
-  }, [dispatch, error, message, borrowSliceError, borrowSliceMessage, favoriteError, favoriteMessage]);
+  const openAddBookPopup = () => {
+    dispatch(toggleAddBookPopup());
+  };
 
-  useEffect(() => {
-    if (isAuthenticated && user?.role === "Admin") {
-      dispatch(fetchAllBorrowedBooks());
+  const openReadPopup = (book) => {
+    setReadBook(book);
+    dispatch(toggleReadBookPopup());
+  };
+
+  const openRecordBookPopup = (id) => {
+    setBorrowBookId(id);
+    dispatch(toggleRecordBookPopup());
+  };
+
+  const isFavorite = (bookId) => {
+    return myFavorites.some(favBook => favBook._id === bookId);
+  };
+
+  const handleToggleFavorite = (bookId) => {
+    if (isFavorite(bookId)) {
+      dispatch(removeFromFavorites(bookId));
+    } else {
+      dispatch(addToFavorites(bookId));
     }
-  }, [isAuthenticated, user]);
+  };
+
 
   return (
     <>
@@ -108,28 +120,16 @@ const BookManagement = () => {
         {/* Sub Header */}
         <header className="flex flex-col gap-3 md:flex-row md:justify-between md:items-center">
           <h2 className="text-x1 font-medium md:text-2x1 md:font-semibold">
-            All Books
+            Library Book Management
           </h2>
-          <div className="flex items-center space-x-4">
-            {isAuthenticated && user?.role === "Admin" && (
-              <button
-                className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800"
-                onClick={() => dispatch(toggleAddBookPopup())}
-              >
-                Add Book
-              </button>
-            )}
-            {isAuthenticated && user?.role === "Admin" && (
-              <button className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800">
-                Record Book
-              </button>
-            )}
-            <input
-              type="text"
-              placeholder="Search..."
-              className="px-4 py-2 border-2 border-gray-300 rounded-md"
-            />
-          </div>
+          {isAuthenticated && user?.role === "Admin" && (
+            <button
+              onClick={openAddBookPopup}
+              className="px-4 py-2 bg-black text-white rounded-md font-semibold hover:bg-gray-800"
+            >
+              Add New Book
+            </button>
+          )}
         </header>
 
         {/* Table */}
@@ -141,12 +141,9 @@ const BookManagement = () => {
                   <th className="px-4 py-2 text-left">ID</th>
                   <th className="px-4 py-2 text-left">Title</th>
                   <th className="px-4 py-2 text-left">Author</th>
-                  {isAuthenticated && user?.role === "Admin" && (
-                    <th className="px-4 py-2 text-left">Quantity</th>
-                  )}
-                  <th className="px-4 py-2 text-left">Price</th>
-                  <th className="px-4 py-2 text-left">Availability</th>
-                  <th className="px-4 py-2 text-center">Actions</th> {/* <--- UPDATED HEADER */}
+                  <th className="px-4 py-2 text-left">Price ($)</th>
+                  <th className="px-4 py-2 text-left">Stock</th>
+                  <th className="px-4 py-2 text-center">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -158,20 +155,30 @@ const BookManagement = () => {
                     <td className="px-4 py-2">{index + 1}</td>
                     <td className="px-4 py-2">{book.title}</td>
                     <td className="px-4 py-2">{book.author}</td>
-                    {isAuthenticated && user?.role === "Admin" && (
-                      <td className="px-4 py-2">{book.quantity}</td>
-                    )}
-                    <td className="px-4 py-2">{`$${book.price}`}</td>
-                    <td className="px-4 py-2">{book.availability ? "Availible": "Unavailible"}</td>
+                    <td className="px-4 py-2">{book.price}</td>
+                    <td className={`px-4 py-2 font-medium ${book.quantity > 0 ? "text-green-600" : "text-red-600"}`}>
+                        {book.quantity}
+                    </td>
 
                     {/* --- ACTIONS COLUMN --- */}
-                    <td className="px-4 py-2 flex space-x-2 my-3 justify-center ">
+                    <td className="px-4 py-2 flex space-x-4 my-3 justify-center">
                       <BookA
                         className="cursor-pointer"
-                        onClick={() => openReadPopup(book._id)}
+                        onClick={() => openReadPopup(book)}
                         title="View Info"
                       />
 
+                      {/* NEW: User Borrow Book */}
+                      {isAuthenticated && user?.role === "User" && book.quantity > 0 && (
+                          <Hand
+                              className="cursor-pointer text-green-600"
+                              onClick={() => handleBorrowBook(book._id)}
+                              title="Borrow Book"
+                          />
+                      )}
+
+
+                      {/* Admin Record Borrow (Existing) */}
                       {isAuthenticated && user?.role === "Admin" && (
                         <NotebookPen
                           className="cursor-pointer"
@@ -179,6 +186,16 @@ const BookManagement = () => {
                           title="Record Borrow"
                         />
                       )}
+
+                      {/* NEW: Admin Delete Book */}
+                      {isAuthenticated && user?.role === "Admin" && (
+                          <Trash2
+                              className="cursor-pointer text-red-600"
+                              onClick={() => handleDeleteBook(book._id)}
+                              title="Delete Book"
+                          />
+                      )}
+
 
                       {isAuthenticated && user?.role === "User" && (
                         <button onClick={() => handleToggleFavorite(book._id)} title={isFavorite(book._id) ? "Remove from Favorites" : "Add to Favorites"}>

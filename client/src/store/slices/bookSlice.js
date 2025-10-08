@@ -51,15 +51,18 @@ const bookSlice = createSlice({
     },
     // End New Reducers
     resetBookSlice(state){
-      state.error =null;
+      state.error = null;
       state.message = null;
-      state.loading= false;
-    },
+      state.loading = false;
+    }
   },
 });
 
+export const { resetBookSlice } = bookSlice.actions;
 
-export const fetchAllBooks = () => async (dispatch)=> {
+export default bookSlice.reducer;
+
+export const fetchAllBooks = () => async (dispatch) => {
   dispatch(bookSlice.actions.fetchBooksRequest());
   await axios.get("http://localhost:4000/api/v1/book/all", { withCredentials: true}).then(res=>{
     dispatch(bookSlice.actions.fetchBooksSucess(res.data.books))
@@ -77,10 +80,26 @@ export const addBook = (data)=> async(dispatch)=>{
   }).then(res=>{
     dispatch(bookSlice.actions.addBookSuccess(res.data.message));
     dispatch(toggleAddBookPopup());
+    dispatch(fetchAllBooks()); // Refresh list after adding book
   }).catch(err=>{
     dispatch(bookSlice.actions.addBookFailed(err.response.data.message));
   });
 };
+
+// NEW THUNK: Admin Delete a book
+export const deleteBook = (bookId, data) => async(dispatch) => {
+  dispatch(bookSlice.actions.addBookRequest()); // Re-using request/loading state for simplicity
+  try {
+    const res = await axios.delete(`http://localhost:4000/api/v1/book/admin/delete/${bookId}`, data, {
+      withCredentials: true,
+    });
+    dispatch(bookSlice.actions.addBookSuccess(res.data.message));
+    dispatch(fetchAllBooks()); // Refresh the book list after deletion
+  } catch (err) {
+    dispatch(bookSlice.actions.addBookFailed(err.response.data.message));
+  }
+};
+
 
 // NEW THUNK: Fetch single book for the OnlineReader component
 export const getSingleBook = (bookId) => async (dispatch) => {
@@ -91,12 +110,5 @@ export const getSingleBook = (bookId) => async (dispatch) => {
     return res.data.book;
   } catch (error) {
     dispatch(bookSlice.actions.fetchSingleBookFailed(error.response.data.message));
-    toast.error(error.response.data.message);
-    return null;
   }
 };
-
-
-export const { resetBookSlice } = bookSlice.actions;
-
-export default bookSlice.reducer;

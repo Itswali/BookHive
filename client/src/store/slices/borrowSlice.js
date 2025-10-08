@@ -1,8 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
-import { toggleRecordBookPopup } from "./popUpSlice";
-// NEW IMPORT: Assumes bookSlice is in the same directory and contains fetchAllBooks
-import { fetchAllBooks } from "./bookSlice";
+import { toggleRecordBookPopup, toggleReturnBookPopup } from "./popUpSlice";
+import { fetchAllBooks } from "./bookSlice"; // Assumed fetchAllBooks is defined in bookSlice and imported
 
 const borrowSlice = createSlice({
   name: "borrow",
@@ -10,10 +9,11 @@ const borrowSlice = createSlice({
     loading: false,
     error: null,
     userBorrowedBooks: [],
-    allBorrowedBooks: [],
+    allBorrowedBooks: [], // List of all borrowed records for Admin
     message: null,
   },
   reducers: {
+    // User Borrowed Books Fetch
     fetchUserBorrowedBooksRequest(state) {
       state.loading = true;
       state.error = null;
@@ -27,6 +27,8 @@ const borrowSlice = createSlice({
       state.loading = false;
       state.error = action.payload;
     },
+
+    // Admin Record Borrow
     recordBookRequest(state) {
       state.loading = true;
       state.error = null;
@@ -41,11 +43,22 @@ const borrowSlice = createSlice({
       state.error = action.payload;
     },
 
+    // User Self-Borrow
+    borrowBookRequest(state) {
+      state.loading = true;
+      state.error = null;
+      state.message = null;
+    },
+    borrowBookSuccess(state, action) {
+      state.loading = false;
+      state.message = action.payload;
+    },
+    borrowBookFailed(state, action) {
+      state.loading = false;
+      state.error = action.payload;
+    },
 
-
-
-
-
+    // Admin Fetch All Borrowed Books
     fetchAllBorrowedBooksRequest(state) {
       state.loading = true;
       state.error = null;
@@ -60,7 +73,7 @@ const borrowSlice = createSlice({
       state.error = action.payload;
     },
 
-
+    // Admin Return Book Request
     returnBookRequest(state) {
       state.loading = true;
       state.error = null;
@@ -75,15 +88,57 @@ const borrowSlice = createSlice({
       state.error = action.payload;
     },
 
-    resetBorrowSlice(state) {
-      state.loading = false;
+    // *** NEW REDUCERS FOR USER SELF-RETURN ***
+    userReturnBookRequest(state) {
+      state.loading = true;
       state.error = null;
       state.message = null;
-    }
+    },
+    userReturnBookSuccess(state, action) {
+      state.loading = false;
+      state.message = action.payload;
+    },
+    userReturnBookFailed(state, action) {
+      state.loading = false;
+      state.error = action.payload;
+    },
+    // *****************************************
 
+    resetBorrowSlice(state) {
+      state.error = null;
+      state.message = null;
+      state.loading = false;
+    },
   },
 });
 
+export const {
+  resetBorrowSlice,
+  fetchUserBorrowedBooksRequest,
+  fetchUserBorrowedBooksSuccess,
+  fetchUserBorrowedBooksFailed,
+  recordBookRequest,
+  recordBookSuccess,
+  recordBookFailed,
+  borrowBookRequest,
+  borrowBookSuccess,
+  borrowBookFailed,
+  fetchAllBorrowedBooksRequest,
+  fetchAllBorrowedBooksSuccess,
+  fetchAllBorrowedBooksFailed,
+  returnBookRequest,
+  returnBookSuccess,
+  returnBookFailed,
+  // *** NEW EXPORTS ***
+  userReturnBookRequest,
+  userReturnBookSuccess,
+  userReturnBookFailed,
+  // *******************
+} = borrowSlice.actions;
+
+export default borrowSlice.reducer;
+
+// Async Thunks
 
 export const fetchUserBorrowedBooks = () => async (dispatch) => {
   dispatch(borrowSlice.actions.fetchUserBorrowedBooksRequest());
@@ -94,31 +149,6 @@ export const fetchUserBorrowedBooks = () => async (dispatch) => {
   });
 };
 
-// NEW ACTION: User-initiated borrow book
-export const borrowBook = (id) => async (dispatch) => {
-  dispatch(borrowSlice.actions.recordBookRequest());
-  try {
-    // API endpoint for user-initiated borrow
-    const res = await axios.post(`http://localhost:4000/api/v1/borrow/user-borrow-book/${id}`, {}, {
-      withCredentials: true,
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-
-    // Dispatch success
-    dispatch(borrowSlice.actions.recordBookSuccess(res.data.message));
-    // Re-fetch all books to update availability flag in the Catalog
-    dispatch(fetchAllBooks());
-    // Re-fetch user's borrowed books list for the MyBorrowedBooks component
-    dispatch(fetchUserBorrowedBooks());
-
-  } catch (err) {
-    dispatch(borrowSlice.actions.recordBookFailed(err.response.data.message));
-  }
-};
-
-
 export const fetchAllBorrowedBooks = () => async (dispatch) => {
   dispatch(borrowSlice.actions.fetchAllBorrowedBooksRequest());
   await axios.get("http://localhost:4000/api/v1/borrow/borrowed-books-by-users", { withCredentials: true }).then(res => {
@@ -128,8 +158,7 @@ export const fetchAllBorrowedBooks = () => async (dispatch) => {
   });
 };
 
-
-
+// ADMIN: Record a new borrow
 export const recordBorrowBook = (email, id) => async (dispatch) => {
   dispatch(borrowSlice.actions.recordBookRequest());
   await axios.post(`http://localhost:4000/api/v1/borrow/record-borrow-book/${id}`, {email}, {
@@ -137,15 +166,35 @@ export const recordBorrowBook = (email, id) => async (dispatch) => {
     headers: {
       "Content-Type": "application/json",
     },
-  }).then(res=>{
+  }).then(res=> {
     dispatch(borrowSlice.actions.recordBookSuccess(res.data.message));
     dispatch(toggleRecordBookPopup());
+    dispatch(fetchAllBooks()); // Update book availability in BookManagement
+    dispatch(fetchAllBorrowedBooks()); // Update Admin list
   }).catch(err=> {
     dispatch(borrowSlice.actions.recordBookFailed(err.response.data.message));
   });
 };
 
+// USER: Self-borrow a book
+export const borrowBook = (bookId) => async (dispatch) => {
+  dispatch(borrowSlice.actions.borrowBookRequest());
+  try {
+    const res = await axios.post(`http://localhost:4000/api/v1/borrow/user-borrow-book/${bookId}`, {}, {
+      withCredentials: true,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    dispatch(borrowSlice.actions.borrowBookSuccess(res.data.message));
+    dispatch(fetchAllBooks());
+    dispatch(fetchUserBorrowedBooks());
+  } catch (error) {
+    dispatch(borrowSlice.actions.borrowBookFailed(error.response.data.message));
+  }
+};
 
+// ADMIN: Return a borrowed book record (via email)
 export const returnBook = (email, id) => async (dispatch)=> {
   dispatch(borrowSlice.actions.returnBookRequest());
   await axios.post(`http://localhost:4000/api/v1/borrow/return-borrowed-book/${id}`, {email}, {
@@ -156,16 +205,28 @@ export const returnBook = (email, id) => async (dispatch)=> {
   }
 ).then(res=>{
   dispatch(borrowSlice.actions.returnBookSuccess(res.data.message));
-}).catch(err =>{
+  dispatch(fetchAllBorrowedBooks()); // Refresh Admin's list of all borrowed books
+  dispatch(fetchAllBooks()); // Update book availability
+  dispatch(toggleReturnBookPopup());
+}).catch(err=> {
   dispatch(borrowSlice.actions.returnBookFailed(err.response.data.message));
 });
-
 };
 
-
-
-export const resetBorrowSlice = () => (dispatch)=> {
-  dispatch(borrowSlice.actions.resetBorrowSlice());
+// *** NEW THUNK: USER SELF-RETURN ***
+export const userReturnBook = (borrowRecordId) => async (dispatch) => {
+  dispatch(borrowSlice.actions.userReturnBookRequest());
+  try {
+    const res = await axios.put(`http://localhost:4000/api/v1/borrow/user-return-book/${borrowRecordId}`, {}, {
+      withCredentials: true,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    dispatch(borrowSlice.actions.userReturnBookSuccess(res.data.message));
+    dispatch(fetchUserBorrowedBooks()); // Refresh user's list
+    dispatch(fetchAllBooks()); // Update book availability
+  } catch (error) {
+    dispatch(borrowSlice.actions.userReturnBookFailed(error.response.data.message));
+  }
 };
-
-export default borrowSlice.reducer;

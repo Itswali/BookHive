@@ -12,7 +12,10 @@ router.get("/borrowed-books-by-users", isAuthenticated, isAuthorized("Admin"), g
 
 router.get("/my-borrowed-books", isAuthenticated,  borrowedBooks);
 
-// router.put("/return-borrowed-book/:bookId", isAuthenticated, returnBorrowBook);
-router.put("/return-book/:bookId", isAuthenticated, returnBorrowBook);
+// ADMIN route for manual return (Admin provides the user's email in the body)
+router.put("/return-book/:bookId", isAuthenticated, isAuthorized("Admin"), returnBorrowBook);
+
+// USER route for self-return (User is identified by their session/token)
+router.put("/user-return-book/:bookId", isAuthenticated, returnBorrowBook);
 
 export default router;

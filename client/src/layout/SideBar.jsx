@@ -64,7 +64,7 @@ const SideBar = ({ isSideBarOpen, setIsSideBarOpen, setSelectedComponent }) => {
           </button>
 
           {/* CATALOG BUTTON MOVED HERE - Visible to ALL authenticated users */}
-          {isAuthenticated && (
+          {isAuthenticated && user?.role === "User" &&  (
             <button
               className="w-full py-2 font-medium bg-transparent rounded-md hover:cursor-pointer flex items-center space-x-2"
               onClick={() => setSelectedComponent("Catalog")}

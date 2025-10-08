@@ -1,6 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
-import { toast } from "react-toastify";
+// import { toast } from "react-toastify";
 
 const favoriteSlice = createSlice({
   name: "favorite",

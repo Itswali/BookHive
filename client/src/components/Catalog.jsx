@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
+// PiKeyReturnBold and FaSquareCheck might not be used here, but keeping for completeness
 import { PiKeyReturnBold } from "react-icons/pi";
-import { FaSquareCheck } from "react-icons/fa6";
+import { FaSquareCheck } from "react-icons/fa6"; // <--- Used for 'Already Borrowed' indicator
+import { FaHeart } from "react-icons/fa"; // <--- NEW IMPORT for filled heart
 // Added Hand icon from lucide-react
 import { BookA, Heart, Download, Hand } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
@@ -9,34 +11,46 @@ import { toast } from "react-toastify";
 import { fetchAllBooks, resetBookSlice } from "../store/slices/bookSlice";
 import { toggleReadBookPopup } from "../store/slices/popUpSlice";
 // Imported new action and reset
-import { borrowBook, resetBorrowSlice } from "../store/slices/borrowSlice";
+import { borrowBook, resetBorrowSlice, fetchUserBorrowedBooks } from "../store/slices/borrowSlice"; // <--- Added fetchUserBorrowedBooks
+// NEW IMPORTS for favorites
+import {
+  addToFavorites,
+  removeFromFavorites,
+  fetchMyFavorites,
+  resetFavoriteSlice,
+} from "../store/slices/favoriteSlice";
 import Header from "../layout/Header";
 import ReadBookPopup from "../popups/ReadBookPopup";
 
 const Catalog = () => {
   const dispatch = useDispatch();
   const [searchTerm, setSearchTerm] = useState("");
-  // FIX 1: Storing the entire book object instead of just the ID
   const [readBook, setReadBook] = useState(null);
 
   const { readBookPopup } = useSelector((state) => state.popup);
-  // Assumed book slice structure
   const { books, loading: bookLoading, error: bookError, message: bookMessage } = useSelector(
     (state) => state.book
   );
-  // Assumed auth slice structure
   const { user, isAuthenticated } = useSelector((state) => state.auth);
-  // Used borrow slice state for toasts/loading
-  const { loading: borrowLoading, error: borrowError, message: borrowMessage } = useSelector(
+  // Selector for favorites
+  const { myFavorites, error: favoriteError, message: favoriteMessage } = useSelector(
+    (state) => state.favorite
+  );
+  // Used borrow slice state for toasts/loading and borrowed books list
+  const { loading: borrowLoading, error: borrowError, message: borrowMessage, userBorrowedBooks } = useSelector(
     (state) => state.borrow
   );
 
-  // Fetch all books on component mount
+  // Fetch initial data
   useEffect(() => {
     dispatch(fetchAllBooks());
-  }, [dispatch]);
+    if (isAuthenticated) {
+      dispatch(fetchMyFavorites());
+      dispatch(fetchUserBorrowedBooks()); // Fetch user's borrowed books to check borrow status
+    }
+  }, [dispatch, isAuthenticated]);
 
-  // Handle Book Slice Toasts
+  // Handle messages/errors
   useEffect(() => {
     if (bookError) {
       toast.error(bookError);
@@ -46,10 +60,7 @@ const Catalog = () => {
       toast.success(bookMessage);
       dispatch(resetBookSlice());
     }
-  }, [dispatch, bookError, bookMessage]);
-
-  // Handle Borrow Slice Toasts
-  useEffect(() => {
+    // --- Borrow Slice Handlers ---
     if (borrowError) {
       toast.error(borrowError);
       dispatch(resetBorrowSlice());
@@ -58,102 +69,116 @@ const Catalog = () => {
       toast.success(borrowMessage);
       dispatch(resetBorrowSlice());
     }
-  }, [dispatch, borrowError, borrowMessage]);
+    // --- Favorite Slice Handlers ---
+    if (favoriteError) {
+      toast.error(favoriteError);
+      dispatch(resetFavoriteSlice());
+    }
+    if (favoriteMessage) {
+      toast.success(favoriteMessage);
+      dispatch(resetFavoriteSlice());
+    }
+  }, [dispatch, bookError, bookMessage, borrowError, borrowMessage, favoriteError, favoriteMessage]);
 
-  // FIX 1: Update openReadPopup to find and set the full book object
-  const openReadPopup = (bookId) => {
-    // Find the book object from the Redux state array
-    const book = books.find((book) => book._id === bookId);
-    setReadBook(book); // Set the book object
+
+  const handleViewBook = (book) => {
+    setReadBook(book);
     dispatch(toggleReadBookPopup());
   };
 
-  const handleAddToFavorites = (bookId) => {
-    // Implement or placeholder for favorite logic
-    toast.info(`Attempting to add Book ID: ${bookId} to favorites...`);
+  const isFavorite = (bookId) => {
+    return myFavorites?.some((favBook) => favBook._id === bookId);
   };
 
-  const handleViewBook = (book) => {
-    if (book.bookFile && book.bookFile.url) {
-      window.open(book.bookFile.url, "_blank");
+  const handleToggleFavorite = (bookId) => {
+    if (isFavorite(bookId)) {
+      dispatch(removeFromFavorites(bookId));
     } else {
-      toast.error("Digital copy not available for this book.");
+      dispatch(addToFavorites(bookId));
     }
   };
 
-  // NEW FUNCTION: Handle book borrowing
   const handleBorrowBook = (bookId) => {
-    if (!isAuthenticated || user?.role !== "User") {
-        toast.error("Only registered users can borrow books.");
-        return;
-    }
     dispatch(borrowBook(bookId));
   };
 
+  // NEW FUNCTION: Check if the book is currently borrowed by the user
+  const isCurrentlyBorrowed = (bookId) => {
+    return userBorrowedBooks?.some(
+      (borrowed) => borrowed.bookId === bookId && !borrowed.returned
+    );
+  };
 
-  const filteredBooks = books.filter(book =>
+  const filteredBooks = books?.filter((book) =>
     book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     book.author.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
     <>
-      <div className="p-4 md:p-8 w-full">
+      <main className="relative flex-1 p-6 pt-28">
         <Header />
-        <div className="mt-8">
-          <h1 className="text-3xl font-bold mb-4">Book Catalog</h1>
-          <div className="mb-6">
-            <input
-              type="text"
-              placeholder="Search by title or author..."
-              className="p-3 border border-gray-300 rounded-md w-full md:w-1/2"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
+        {/* Sub Header */}
+        <header className="flex flex-col gap-3 md:flex-row md:justify-between md:items-center">
+          <h2 className="text-xl font-medium md:text-2xl md:font-semibold">
+            Book Catalog
+          </h2>
+          <input
+            type="text"
+            placeholder="Search by Title or Author..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full md:w-1/3 px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-black focus:border-black"
+          />
+        </header>
 
-          {(bookLoading || borrowLoading) && <p>Loading...</p>}
-
-          {!bookLoading && filteredBooks.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="min-w-full bg-white shadow-md rounded-lg">
-                <thead className="bg-gray-800 text-white">
-                  <tr>
-                    <th className="px-4 py-3 text-left">Title</th>
-                    <th className="px-4 py-3 text-left">Author</th>
-                    <th className="px-4 py-3 text-center">Category</th>
-                    <th className="px-4 py-3 text-center">Available</th>
-                    <th className="px-4 py-3 text-center">Actions</th>
+        {/* Table */}
+        <div className="mt-6">
+          {bookLoading ? (
+            <p className="text-center text-gray-500">Loading books...</p>
+          ) : filteredBooks && filteredBooks.length > 0 ? (
+            <div className="overflow-auto bg-white rounded-md shadow-lg">
+              <table className="min-w-full border-collapse">
+                <thead>
+                  <tr className="bg-gray-200">
+                    <th className="px-4 py-2 text-left">No.</th>
+                    <th className="px-4 py-2 text-left">Title</th>
+                    <th className="px-4 py-2 text-left">Author</th>
+                    <th className="px-4 py-2 text-left">Quantity</th>
+                    <th className="px-4 py-2 text-center">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredBooks.map((book) => (
-                    <tr key={book._id} className="border-b hover:bg-gray-50">
-                      <td className="px-4 py-2 font-medium">{book.title}</td>
+                  {filteredBooks.map((book, index) => (
+                    <tr
+                      key={book._id}
+                      className={(index + 1) % 2 === 0 ? "bg-gray-50" : ""}
+                    >
+                      <td className="px-4 py-2">{index + 1}</td>
+                      <td className="px-4 py-2">{book.title}</td>
                       <td className="px-4 py-2">{book.author}</td>
-                      <td className="px-4 py-2 text-center">{book.category}</td>
-                      <td className="px-4 py-2 text-center">
-                        {/* Assuming book.availability is a boolean */}
-                        {book.availability ? (
-                          <FaSquareCheck className="text-green-500 mx-auto" />
-                        ) : (
-                          <PiKeyReturnBold className="text-red-500 mx-auto" />
-                        )}
-                      </td>
-                      <td className="px-4 py-2 flex space-x-2 my-3 justify-center">
-                        <BookA
-                          onClick={() => openReadPopup(book._id)}
-                          className="cursor-pointer text-gray-600 hover:text-black"
-                          title="View Details"
-                        />
+                      <td className="px-4 py-2">{book.quantity}</td>
+                      <td className="px-4 py-2 flex space-x-4 my-3 justify-center items-center">
+                        {/* Borrow Book Button - Only for Users, if not borrowed, and quantity > 0 */}
+                        {isAuthenticated &&
+                          user?.role === "User" &&
+                          !isCurrentlyBorrowed(book._id) && // <--- NEW CHECK
+                          book.quantity > 0 && (
+                            <Hand
+                              onClick={() => handleBorrowBook(book._id)}
+                              className={`cursor-pointer text-green-600 hover:text-green-800 ${borrowLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                              title="Borrow Book"
+                            />
+                          )}
 
-                        {/* NEW: Borrow Book Button */}
-                        {book.availability && isAuthenticated && user?.role === "User" && (
-                          <Hand
-                            onClick={() => handleBorrowBook(book._id)}
-                            className="cursor-pointer text-green-600 hover:text-green-800"
-                            title="Borrow Book"
-                          />
+                        {/* Already Borrowed Indicator */}
+                        {isAuthenticated &&
+                          user?.role === "User" &&
+                          isCurrentlyBorrowed(book._id) && (
+                            <FaSquareCheck
+                                className="text-amber-500 w-5 h-5"
+                                title="Already Borrowed"
+                            />
                         )}
 
                         {/* View PDF / Read Book - Only if digital copy exists */}
@@ -161,17 +186,22 @@ const Catalog = () => {
                           <Download
                             onClick={() => handleViewBook(book)}
                             className="cursor-pointer text-blue-600 hover:text-blue-800"
-                            title="View Digital Copy"
+                            title="View Book Info / Read Online"
                           />
                         )}
 
-                        {/* Favorites Button */}
+                        {/* Favorites Button (Toggled Heart) */}
                         {isAuthenticated && user?.role === "User" && (
-                          <Heart
-                            onClick={() => handleAddToFavorites(book._id)}
-                            className="cursor-pointer text-red-400 hover:text-red-600"
-                            title="Add to Favorites"
-                          />
+                          <button
+                            onClick={() => handleToggleFavorite(book._id)}
+                            title={isFavorite(book._id) ? "Remove from Favorites" : "Add to Favorites"}
+                          >
+                            {isFavorite(book._id) ? (
+                              <FaHeart className="text-red-600 w-5 h-5" /> // Filled heart for favorite
+                            ) : (
+                              <Heart className="text-gray-400 w-5 h-5 hover:text-red-600" /> // Outline heart
+                            )}
+                          </button>
                         )}
                       </td>
                     </tr>
@@ -183,8 +213,7 @@ const Catalog = () => {
             !bookLoading && <p className="text-center text-gray-500">No books found in the catalog.</p>
           )}
         </div>
-      </div>
-      {/* FIX 1: Pass the readBook object, not the ID */}
+      </main>
       {readBookPopup && readBook && <ReadBookPopup book={readBook} />}
     </>
   );

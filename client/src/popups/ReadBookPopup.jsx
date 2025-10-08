@@ -1,16 +1,22 @@
 import React from "react";
 import { useDispatch } from "react-redux";
 import { toggleReadBookPopup } from "../store/slices/popUpSlice";
-import { useNavigate } from "react-router-dom"; // <--- NEW IMPORT
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 const ReadBookPopup = ({ book }) => {
   const dispatch = useDispatch();
-  const navigate = useNavigate(); // <--- NEW HOOK
+  const navigate = useNavigate();
 
-  const handleReadBook = () => { // <--- NEW HANDLER
+  const handleReadBook = () => {
     dispatch(toggleReadBookPopup());
-    navigate(`/read-book/${book._id}`);
-  };
+
+    if (book && book.bookFile && book.bookFile.url) {
+        window.open(book.bookFile.url, '_blank');
+    } else {
+        toast.error("Digital copy URL not available for this book.");
+    }
+};
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 p-5 flex items-center justify-center z-50">
@@ -51,8 +57,7 @@ const ReadBookPopup = ({ book }) => {
             </p>
           </div>
         </div>
-        <div className="flex justify-end px-6 py-4 bg-gray-100 rounded-b-lg space-x-4"> {/* <--- Added space-x-4 */}
-          {/* --- NEW READ BUTTON --- */}
+        <div className="flex justify-end px-6 py-4 bg-gray-100 rounded-b-lg space-x-4">
           {book && book.bookFile && book.bookFile.url && (
             <button
               onClick={handleReadBook}
