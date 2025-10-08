@@ -64,7 +64,7 @@ export default bookSlice.reducer;
 
 export const fetchAllBooks = () => async (dispatch) => {
   dispatch(bookSlice.actions.fetchBooksRequest());
-  await axios.get("http://localhost:4000/api/v1/book/all", { withCredentials: true}).then(res=>{
+  await axios.get("https://bookhive-digital.onrender.com/api/v1/book/all", { withCredentials: true}).then(res=>{
     dispatch(bookSlice.actions.fetchBooksSucess(res.data.books))
   }).catch(err=>{
     dispatch(bookSlice.actions.fetchBooksFailed(err.response.data.message));
@@ -74,7 +74,7 @@ export const fetchAllBooks = () => async (dispatch) => {
 // FIX: Removed 'headers: { "Content-Type": "application/json" }' to allow FormData with file upload
 export const addBook = (data)=> async(dispatch)=>{
   dispatch(bookSlice.actions.addBookRequest());
-  await axios.post("http://localhost:4000/api/v1/book/admin/add", data, {
+  await axios.post("https://bookhive-digital.onrender.com/api/v1/book/admin/add", data, {
     withCredentials: true,
     // Headers are now correctly omitted for multipart/form-data
   }).then(res=>{
@@ -90,7 +90,7 @@ export const addBook = (data)=> async(dispatch)=>{
 export const deleteBook = (bookId, data) => async(dispatch) => {
   dispatch(bookSlice.actions.addBookRequest()); // Re-using request/loading state for simplicity
   try {
-    const res = await axios.delete(`http://localhost:4000/api/v1/book/admin/delete/${bookId}`, data, {
+    const res = await axios.delete(`https://bookhive-digital.onrender.com/api/v1/book/admin/delete/${bookId}`, data, {
       withCredentials: true,
     });
     dispatch(bookSlice.actions.addBookSuccess(res.data.message));
@@ -105,7 +105,7 @@ export const deleteBook = (bookId, data) => async(dispatch) => {
 export const getSingleBook = (bookId) => async (dispatch) => {
   dispatch(bookSlice.actions.fetchSingleBookRequest());
   try {
-    const res = await axios.get(`http://localhost:4000/api/v1/book/${bookId}`, { withCredentials: true });
+    const res = await axios.get(`https://bookhive-digital.onrender.com/api/v1/book/${bookId}`, { withCredentials: true });
     // Success payload can be returned directly to the component
     return res.data.book;
   } catch (error) {

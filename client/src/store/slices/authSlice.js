@@ -152,7 +152,7 @@ export const resetAuthSlice = () => (dispatch) => {
 export const register = (data) => async (dispatch) => {
   dispatch(registerRequest());
   try {
-    const res = await axios.post("http://localhost:4000/api/v1/auth/register", data, {
+    const res = await axios.post("https://bookhive-digital.onrender.com/api/v1/auth/register", data, {
       withCredentials: true,
       headers: {
         "Content-Type": "application/json",
@@ -167,7 +167,7 @@ export const register = (data) => async (dispatch) => {
 export const otpVerification = (email, otp) => async (dispatch) => {
   dispatch(otpVerificationRequest());
   try {
-    const res = await axios.post("http://localhost:4000/api/v1/auth/verify-otp", { email, otp }, {
+    const res = await axios.post("https://bookhive-digital.onrender.com/api/v1/auth/verify-otp", { email, otp }, {
       withCredentials: true,
       headers: {
         "Content-Type": "application/json",
@@ -182,7 +182,7 @@ export const otpVerification = (email, otp) => async (dispatch) => {
 export const login = (data) => async (dispatch) => {
   dispatch(loginRequest());
   try {
-    const res = await axios.post("http://localhost:4000/api/v1/auth/login", data, {
+    const res = await axios.post("https://bookhive-digital.onrender.com/api/v1/auth/login", data, {
       withCredentials: true,
       headers: {
         "Content-Type": "application/json",
@@ -197,7 +197,7 @@ export const login = (data) => async (dispatch) => {
 export const logout = () => async (dispatch) => {
   dispatch(logoutRequest());
   try {
-    const res = await axios.get("http://localhost:4000/api/v1/auth/logout", {
+    const res = await axios.get("https://bookhive-digital.onrender.com/api/v1/auth/logout", {
       withCredentials: true,
     });
     dispatch(logoutSuccess(res.data.message));
@@ -210,7 +210,7 @@ export const logout = () => async (dispatch) => {
 export const getUser = () => async (dispatch) => {
   dispatch(getUserRequest());
   try {
-    const res = await axios.get("http://localhost:4000/api/v1/auth/me", {
+    const res = await axios.get("https://bookhive-digital.onrender.com/api/v1/auth/me", {
       withCredentials: true,
     });
     dispatch(getUserSuccess(res.data));
@@ -222,7 +222,7 @@ export const getUser = () => async (dispatch) => {
 export const forgotPassword = (email) => async (dispatch) => {
   dispatch(forgotPasswordRequest());
   try {
-    const res = await axios.post("http://localhost:4000/api/v1/auth/password/forgot", { email }, {
+    const res = await axios.post("https://bookhive-digital.onrender.com/api/v1/auth/password/forgot", { email }, {
       withCredentials: true,
       headers: {
         "Content-Type": "application/json",
@@ -237,7 +237,7 @@ export const forgotPassword = (email) => async (dispatch) => {
 export const resetPassword = (data, token) => async (dispatch) => {
   dispatch(resetPasswordRequest());
   try {
-    const res = await axios.put(`http://localhost:4000/api/v1/auth/password/reset/${token}`, data, {
+    const res = await axios.put(`https://bookhive-digital.onrender.com/api/v1/auth/password/reset/${token}`, data, {
       withCredentials: true,
       headers: {
         "Content-Type": "application/json",
@@ -252,7 +252,7 @@ export const resetPassword = (data, token) => async (dispatch) => {
 export const updatePassword = (data) => async (dispatch) => {
   dispatch(updatePasswordRequest());
   try {
-    const res = await axios.put(`http://localhost:4000/api/v1/auth/password/update`, data, {
+    const res = await axios.put(`https://bookhive-digital.onrender.com/api/v1/auth/password/update`, data, {
       withCredentials: true,
       headers: {
         "Content-Type": "application/json",

@@ -59,7 +59,7 @@ export const {
 export const fetchMyFavorites = () => async (dispatch) => {
   dispatch(favoriteSlice.actions.fetchFavoritesRequest());
   try {
-    const res = await axios.get("http://localhost:4000/api/v1/favorite/my-favorites", { withCredentials: true });
+    const res = await axios.get("https://bookhive-digital.onrender.com/api/v1/favorite/my-favorites", { withCredentials: true });
     dispatch(favoriteSlice.actions.fetchFavoritesSuccess(res.data.favoriteBooks));
   } catch (error) {
     dispatch(favoriteSlice.actions.fetchFavoritesFailed(error.response.data.message));
@@ -70,7 +70,7 @@ export const fetchMyFavorites = () => async (dispatch) => {
 export const addToFavorites = (bookId) => async (dispatch) => {
   dispatch(favoriteSlice.actions.toggleFavoriteRequest());
   try {
-    const res = await axios.put(`http://localhost:4000/api/v1/favorite/add/${bookId}`, {}, { withCredentials: true });
+    const res = await axios.put(`https://bookhive-digital.onrender.com/api/v1/favorite/add/${bookId}`, {}, { withCredentials: true });
     dispatch(favoriteSlice.actions.toggleFavoriteSuccess(res.data.message));
     dispatch(fetchMyFavorites()); // Refresh favorites list
   } catch (error) {
@@ -82,7 +82,7 @@ export const addToFavorites = (bookId) => async (dispatch) => {
 export const removeFromFavorites = (bookId) => async (dispatch) => {
   dispatch(favoriteSlice.actions.toggleFavoriteRequest());
   try {
-    const res = await axios.put(`http://localhost:4000/api/v1/favorite/remove/${bookId}`, {}, { withCredentials: true });
+    const res = await axios.put(`https://bookhive-digital.onrender.com/api/v1/favorite/remove/${bookId}`, {}, { withCredentials: true });
     dispatch(favoriteSlice.actions.toggleFavoriteSuccess(res.data.message));
     dispatch(fetchMyFavorites()); // Refresh favorites list
   } catch (error) {
